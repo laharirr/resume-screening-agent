@@ -191,6 +191,39 @@ http://127.0.0.1:8000/docs
 | Completeness | 10% |
 
 ---
+## Scoring Method
+
+The final candidate score is calculated using a hybrid approach.
+
+Final Score =
+60% Semantic Similarity +
+40% Skill Match
+
+Semantic Similarity:
+Uses Sentence Transformers embeddings and cosine similarity between the Job Description and Resume.
+
+Skill Match:
+Extracted resume skills are compared against JD skills.
+
+Recommendation:
+Score ≥ 70 → Recommended
+Score < 70 → Not Recommended
+
+## Tradeoffs
+
+Current Version
+
+- Uses keyword-based skill extraction.
+- Experience is not weighted separately.
+- Education contributes indirectly through semantic similarity.
+
+Future Improvements
+
+- LLM-based reasoning
+- Better skill ontology
+- ATS keyword optimization
+- OCR support for scanned resumes
+- Recruiter feedback learning
 
 # 🌐 REST API
 
