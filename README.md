@@ -239,9 +239,9 @@ The project generates
 Add screenshots here:
 
 - Streamlit Dashboard
-![Dashboard](screenshots\dashboard.png)
+![Dashboard](screenshots/dashboard.png)
 -Resume Uploads
-![Dashboard](screenshots\resume_upload.png)
+![Dashboard](screenshots/resume_upload.png)
 - ATS Score
 ![Dashboard](screenshots/ats_score.png)
 - Candidate Ranking
@@ -252,7 +252,7 @@ Add screenshots here:
 -CSV Report
 ![Dashboard](screenshots/csv_report.png)
 -PDF Report
-![Dashboard](screenshots/pdf-report.png)
+![Dashboard](screenshots/pdf_report.png)
 ---
 
 # 🚀 Future Enhancements
