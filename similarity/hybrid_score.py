@@ -12,7 +12,7 @@ def skill_score(candidate_skills, jd_skills):
 
 def final_score(semantic, skill):
     """
-    Temporary weighted score.
+    Calculate weighted final score.
     """
     return round(
         semantic * 0.70 +

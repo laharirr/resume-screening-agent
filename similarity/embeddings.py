@@ -1,11 +1,11 @@
 from sentence_transformers import SentenceTransformer
 
-# Load the model only once
+print("Loading SentenceTransformer model...")
+
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
+print("Model Loaded Successfully")
 
 def get_embedding(text):
-    """
-    Convert text into a vector embedding.
-    """
+    print("Encoding:", text[:40])
     return model.encode(text, convert_to_tensor=True)
