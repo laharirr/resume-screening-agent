@@ -2,21 +2,47 @@ import os
 import sys
 import json
 
+# -------------------------------------------------
 # Project Root
 # -------------------------------------------------
+
 PROJECT_ROOT = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..")
 )
 
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
+
 import streamlit as st
 import pandas as pd
+
+# -------------------------------------------------
+# Reports
+# -------------------------------------------------
+
 from reports.pdf_report import generate_pdf
+
+# -------------------------------------------------
+# Visualizations
+# -------------------------------------------------
+
+from visualization.charts import score_chart
 from visualization.ats_gauge import ats_gauge
 from visualization.radar_chart import skill_radar
+from visualization.pie_chart import recommendation_chart
+
+# -------------------------------------------------
+# Analysis
+# -------------------------------------------------
+
+from analysis.recruiter_report import generate_report
 from analysis.decision_panel import recruiter_decision
 from analysis.candidate_comparison import candidate_comparison
+
+# -------------------------------------------------
+# Database
+# -------------------------------------------------
+
 from database.database import (
     create_table,
     save_results,
@@ -24,38 +50,44 @@ from database.database import (
 )
 
 # -------------------------------------------------
-# Imports
+# Resume Processing
 # -------------------------------------------------
+
 from file_utils import save_uploaded_file
 
 from resume_parser.resume_parser import parse_resume_folder
 from extraction.extractor import extract_resume_data
 from similarity.ranking import rank_candidates
-from visualization.pie_chart import recommendation_chart
+
+# -------------------------------------------------
+# Export
+# -------------------------------------------------
+
 from exports.csv_export import export_csv
 from exports.json_export import export_json
 
-from analysis.recruiter_report import generate_report
-from visualization.charts import score_chart
+# -------------------------------------------------
+# Streamlit
+# -------------------------------------------------
 
-# -------------------------------------------------
-# Streamlit Page
-# -------------------------------------------------
 st.set_page_config(
     page_title="AI Resume Screening Agent",
     page_icon="🤖",
     layout="wide",
 )
+
 create_table()
-# =====================================
+
+# -------------------------------------------------
 # Sidebar
-# =====================================
+# -------------------------------------------------
 
 st.sidebar.title("🤖 AI Resume Screening")
 
 st.sidebar.markdown("---")
 
-st.sidebar.info("""
+st.sidebar.info(
+"""
 ### Features
 
 ✅ Resume Parsing
@@ -73,25 +105,38 @@ st.sidebar.info("""
 ✅ CSV Export
 
 ✅ JSON Export
-""")
+
+✅ PDF Export
+
+✅ Dashboard Analytics
+"""
+)
 
 st.sidebar.markdown("---")
 
 st.sidebar.success("Version 1.0")
 
-st.sidebar.caption("Developed using Python, NLP & Machine Learning")
+st.sidebar.caption(
+    "Developed using Python • NLP • Machine Learning"
+)
+
+# -------------------------------------------------
+# Title
+# -------------------------------------------------
 
 st.title("🤖 AI Resume Screening Agent")
 
-st.markdown("""
+st.markdown(
+"""
 Upload multiple resumes and compare them against a Job Description using
 AI-powered semantic similarity and hybrid scoring.
-""")
+"""
+)
 
 st.divider()
 
 # -------------------------------------------------
-# Upload Section
+# Upload
 # -------------------------------------------------
 
 uploaded_files = st.file_uploader(
@@ -111,28 +156,27 @@ job_description = st.text_area(
 
 if st.button("🚀 Rank Candidates"):
 
-    # ---------------- Validation ----------------
-
     if not uploaded_files:
         st.error("Please upload resumes.")
         st.stop()
 
     if job_description.strip() == "":
-        st.error("Please enter Job Description.")
+        st.error("Please enter the Job Description.")
         st.stop()
 
     upload_folder = "data/uploads"
 
     os.makedirs(upload_folder, exist_ok=True)
 
-    # Delete old resumes
+    # Remove previous resumes
     for file in os.listdir(upload_folder):
+
         path = os.path.join(upload_folder, file)
 
         if os.path.isfile(path):
             try:
                 os.remove(path)
-            except:
+            except PermissionError:
                 pass
 
     # Save uploaded resumes
@@ -149,10 +193,10 @@ if st.button("🚀 Rank Candidates"):
 
         resumes = parse_resume_folder(upload_folder)
 
-        st.write("Number of resumes found:", len(resumes))
+        st.write("Number of resumes:", len(resumes))
 
         if len(resumes) == 0:
-            st.error("No resumes found.")
+            st.error("No valid resumes found.")
             st.stop()
 
         extracted = {}
@@ -169,86 +213,40 @@ if st.button("🚀 Rank Candidates"):
                 job_description,
                 resumes,
             )
+
             save_results(results)
 
             print(results)
+
             print("=" * 60)
 
         except Exception as e:
 
             st.error(f"Ranking Error:\n{e}")
+
             raise e
 
     # -------------------------------------------------
-    # Export Files
+    # Export
     # -------------------------------------------------
 
     export_csv(results)
     export_json(results)
+
     pdf_path = generate_pdf(results)
     # -------------------------------------------------
     # Dashboard Statistics
     # -------------------------------------------------
 
-    total_candidates = len(results)
-
-    best_score = max(candidate["final_score"] for candidate in results)
-
-    average_score = round(
-        sum(candidate["final_score"] for candidate in results) / total_candidates,
-        2
-    )
-
-    recommended = sum(
-        1
-        for candidate in results
-        if candidate["recommendation"] == "Recommended"
-    )
-
     st.header("📊 Dashboard Statistics")
 
-    col1, col2, col3, col4 = st.columns(4)
-
-    col1.metric(
-        "Total Candidates",
-        total_candidates,
-    )
-
-    col2.metric(
-        "Best Score",
-        f"{best_score:.2f}",
-    )
-
-    col3.metric(
-        "Average Score",
-        f"{average_score:.2f}",
-    )
-
-    col4.metric(
-        "Recommended",
-        recommended,
-    )
-
-    st.divider()
-    # -------------------------------------------------
-    # Recruiter Dashboard
-    # -------------------------------------------------
-
-    st.header("📊 Recruiter Dashboard")
-
     total_candidates = len(results)
+
+    best_score = max(c["final_score"] for c in results)
 
     average_score = round(
         sum(c["final_score"] for c in results) / total_candidates,
         2
-    )
-
-    highest_score = max(
-        c["final_score"] for c in results
-    )
-
-    lowest_score = min(
-        c["final_score"] for c in results
     )
 
     recommended = sum(
@@ -265,13 +263,13 @@ if st.button("🚀 Rank Candidates"):
     )
 
     col2.metric(
-        "Highest Score",
-        highest_score
+        "Best Score",
+        f"{best_score:.2f}"
     )
 
     col3.metric(
         "Average Score",
-        average_score
+        f"{average_score:.2f}"
     )
 
     col4.metric(
@@ -280,16 +278,25 @@ if st.button("🚀 Rank Candidates"):
     )
 
     st.divider()
+
     # -------------------------------------------------
-    # Best Candidate
+    # ATS Score
     # -------------------------------------------------
 
     winner = results[0]
-    st.header("ATS Score")
+
+    st.header("🎯 ATS Score")
 
     gauge = ats_gauge(
         winner["final_score"]
     )
+
+    st.plotly_chart(
+        gauge,
+        width="stretch",
+        key="ats_gauge"
+    )
+
     if winner["final_score"] >= 85:
         st.success("Excellent ATS Match")
 
@@ -302,12 +309,13 @@ if st.button("🚀 Rank Candidates"):
     else:
         st.error("Low ATS Match")
 
-    st.plotly_chart(
-        gauge,
-        use_container_width=True
-    )
+    st.divider()
 
-    st.success("🏆 Best Candidate")
+    # -------------------------------------------------
+    # Best Candidate
+    # -------------------------------------------------
+
+    st.header("🏆 Best Candidate")
 
     col1, col2, col3 = st.columns(3)
 
@@ -318,7 +326,7 @@ if st.button("🚀 Rank Candidates"):
 
     col2.metric(
         "Final Score",
-        winner["final_score"]
+        f"{winner['final_score']:.2f}"
     )
 
     col3.metric(
@@ -329,30 +337,63 @@ if st.button("🚀 Rank Candidates"):
     st.divider()
 
     # -------------------------------------------------
-    # Score Chart
+    # Candidate Ranking Chart
     # -------------------------------------------------
 
-    chart = score_chart(results)
+    st.header("📈 Candidate Ranking")
+
+    ranking_chart = score_chart(results)
 
     st.plotly_chart(
-        chart,
-        use_container_width=True
+        ranking_chart,
+        width="stretch",
+        key="candidate_ranking_chart"
     )
 
     st.divider()
 
-    chart = score_chart(results)
+    # -------------------------------------------------
+    # Recommendation Distribution
+    # -------------------------------------------------
+
+    st.header("📊 Recommendation Distribution")
+
+    pie_chart = recommendation_chart(results)
 
     st.plotly_chart(
-        chart,
-        use_container_width=True
+        pie_chart,
+        width="stretch",
+        key="recommendation_pie_chart"
     )
 
+    st.divider()
+
     # -------------------------------------------------
-    # Recruiter Report
+    # Candidate Search
     # -------------------------------------------------
 
-    st.header("Candidate Analysis")
+    search = st.text_input(
+        "🔍 Search Candidate"
+    )
+
+    filtered = results
+
+    if search:
+
+        filtered = [
+
+            c
+
+            for c in results
+
+            if search.lower() in c["candidate"].lower()
+
+        ]
+    # -------------------------------------------------
+    # Candidate Analysis
+    # -------------------------------------------------
+
+    st.header("📋 Candidate Analysis")
 
     jd_skills = [
         "Python",
@@ -365,32 +406,20 @@ if st.button("🚀 Rank Candidates"):
         "PostgreSQL",
         "LangChain",
     ]
-    search = st.text_input(
-    "🔍 Search Candidate"
-    )
-    filtered = results
-
-    if search:
-        filtered = [
-            c for c in results
-            if search.lower() in c["candidate"].lower()
-        ]
 
     for i, candidate in enumerate(filtered, start=1):
 
         if i == 1:
             badge = "🥇 Gold Candidate"
-
         elif i == 2:
             badge = "🥈 Silver Candidate"
-
         elif i == 3:
             badge = "🥉 Bronze Candidate"
-
         else:
             badge = f"Rank #{i}"
 
         st.subheader(badge)
+
         resume_path = os.path.join(
             "data/uploads",
             candidate["candidate"]
@@ -400,11 +429,14 @@ if st.button("🚀 Rank Candidates"):
 
             try:
                 with open(resume_path, "rb") as f:
+
                     st.download_button(
                         "Download Resume",
                         data=f,
-                        file_name=candidate["candidate"]
+                        file_name=candidate["candidate"],
+                        key=f"resume_{i}"
                     )
+
             except:
                 st.warning("Resume not found.")
 
@@ -413,56 +445,57 @@ if st.button("🚀 Rank Candidates"):
         with col1:
 
             st.markdown(f"## 👤 {candidate['candidate']}")
-            st.write("Semantic Score:", candidate["semantic_score"])
+
             st.write("Semantic Score")
+
             st.progress(candidate["semantic_score"] / 100)
+
             st.write(f"{candidate['semantic_score']:.2f}")
-            st.write("Final Score:", candidate["final_score"])
-            st.write("Recommendation:", candidate["recommendation"])
-            st.write("### ATS Match")
+
+            st.write("Skill Score")
+
+            st.progress(candidate["skill_score"] / 100)
+
+            st.write(f"{candidate['skill_score']:.2f}")
+
+            st.write("Final Score")
 
             st.progress(candidate["final_score"] / 100)
 
-            st.write(
-                f"ATS Match Percentage: {candidate['final_score']:.2f}%"
-            )
-            st.write("Final Score:", candidate["final_score"])
+            st.write(f"{candidate['final_score']:.2f}")
 
-            st.write("### ATS Match")
-
-            st.progress(candidate["final_score"] / 100)
-
-            st.write(
-                f"ATS Match Percentage: {candidate['final_score']:.2f}%"
-            )
-
-            # ---------- ADD STEP 3 HERE ----------
             if candidate["final_score"] >= 90:
-                strength = "🟢 Excellent Resume"
+                st.success("🟢 Excellent Resume")
 
             elif candidate["final_score"] >= 75:
-                strength = "🟢 Strong Resume"
+                st.success("🟢 Strong Resume")
 
             elif candidate["final_score"] >= 60:
-                strength = "🟡 Average Resume"
+                st.warning("🟡 Average Resume")
 
             else:
-                strength = "🔴 Needs Improvement"
-
-            st.success(strength)
-# ------------------------------------
+                st.error("🔴 Needs Improvement")
 
         with col2:
 
             report = generate_report(
                 extracted[candidate["candidate"]],
                 jd_skills,
-                candidate["recommendation"],
+                candidate["recommendation"]
             )
-            decision = recruiter_decision(
-                candidate,
-                report
-            )
+
+            st.write("### Recruiter Report")
+
+            st.success(f"Matched Skills\n\n{report['Matched Skills']}")
+
+            st.warning(f"Missing Skills\n\n{report['Missing Skills']}")
+
+            st.info(f"Skill Match : {report['Match Percentage']}%")
+
+            st.write("Recommendation")
+
+            st.success(candidate["recommendation"])
+
             radar = skill_radar(
                 extracted[candidate["candidate"]]["skills"],
                 jd_skills
@@ -470,57 +503,75 @@ if st.button("🚀 Rank Candidates"):
 
             st.plotly_chart(
                 radar,
-                use_container_width=True
-            )
-
-            st.write("### Recruiter Report")
-
-            st.success(
-                f"Matched Skills: {report['Matched Skills']}"
-            )
-
-            st.warning(
-                f"Missing Skills: {report['Missing Skills']}"
-            )
-
-            st.info(
-                f"Match Percentage: {report['Match Percentage']}%"
+                width="stretch",
+                key=f"radar_{i}"
             )
 
         st.divider()
-    st.subheader("🤖 AI Recruiter Decision")
+
+    # -------------------------------------------------
+    # AI Recruiter Decision
+    # -------------------------------------------------
+
+    st.header("🤖 AI Recruiter Decision")
+
+    decision = recruiter_decision(
+        results[0],
+        generate_report(
+            extracted[results[0]["candidate"]],
+            jd_skills,
+            results[0]["recommendation"]
+        )
+    )
 
     col1, col2 = st.columns(2)
 
     with col1:
-        st.success(f"Decision: {decision['Decision']}")
-        st.write(f"Interview: {decision['Interview']}")
+
+        st.success(
+            f"Decision : {decision['Decision']}"
+        )
+
+        st.write(
+            f"Interview : {decision['Interview']}"
+        )
 
     with col2:
-        st.write(f"Strengths: {decision['Strength']}")
-        st.write(f"Weaknesses: {decision['Weakness']}")
 
-    st.info(f"ATS Compatibility: {decision['ATS']:.2f}%")
+        st.write(
+            f"Strength : {decision['Strength']}"
+        )
+
+        st.write(
+            f"Weakness : {decision['Weakness']}"
+        )
+
+    st.info(
+        f"ATS Compatibility : {decision['ATS']:.2f}%"
+    )
+
+    st.divider()
+
     # -------------------------------------------------
     # Ranking Table
     # -------------------------------------------------
 
-    st.header("Ranking Table")
-    # Create DataFrame
-    df = pd.DataFrame(results)
-        # Number of candidates
-    st.info(f"Candidates Found: {len(df)}")
+    st.header("📊 Ranking Table")
 
-    # Display table
+    df = pd.DataFrame(results)
+
     st.dataframe(
         df,
-        use_container_width=True
+        width="stretch"
     )
-    st.header("Recruiter Filters")
 
-    search_name = st.text_input(
-        "Search Candidate"
-    )
+    st.divider()
+
+    # -------------------------------------------------
+    # Recruiter Filters
+    # -------------------------------------------------
+
+    st.header("🔍 Recruiter Filters")
 
     recommendation_filter = st.selectbox(
         "Recommendation",
@@ -534,176 +585,127 @@ if st.button("🚀 Rank Candidates"):
         0
     )
 
-    sort_order = st.selectbox(
-        "Sort Final Score",
-        ["Highest First", "Lowest First"]
-    )
-    # Search Candidate
-    if search_name:
+    filtered_df = df.copy()
 
-        df = df[
-            df["candidate"].str.contains(
-                search_name,
-                case=False
-            )
-        ]
-
-    # Recommendation Filter
     if recommendation_filter != "All":
 
-        df = df[
-            df["recommendation"] == recommendation_filter
+        filtered_df = filtered_df[
+            filtered_df["recommendation"] == recommendation_filter
         ]
 
-    # Minimum Score Filter
-    df = df[
-        df["final_score"] >= minimum_score
+    filtered_df = filtered_df[
+        filtered_df["final_score"] >= minimum_score
     ]
 
-    # Sort
-    ascending = sort_order == "Lowest First"
-
-    df = df.sort_values(
-        by="final_score",
-        ascending=ascending
+    st.dataframe(
+        filtered_df,
+        width="stretch"
     )
 
+    st.divider()
 
+    # -------------------------------------------------
+    # Candidate Comparison
+    # -------------------------------------------------
+
+    st.header("📈 Candidate Comparison")
 
     comparison_df = candidate_comparison(results)
 
     st.dataframe(
         comparison_df,
-        use_container_width=True,
-    )
-    top = comparison_df.iloc[0]
-
-    st.success(
-        f"""
-    🏆 Top Candidate
-
-    Name: {top['candidate']}
-
-    Final Score: {top['final_score']}
-
-    Recommendation: {top['recommendation']}
-    """
-    )
-    st.subheader("Recommendation Distribution")
-
-    recommended = len(
-        comparison_df[
-            comparison_df["recommendation"] == "Recommended"
-        ]
+        width="stretch"
     )
 
-    not_recommended = len(comparison_df) - recommended
+    st.divider()
 
-    st.write("Recommended:", recommended)
-    st.write("Not Recommended:", not_recommended)
-    df = pd.DataFrame(results)
-    st.subheader("Average Scores")
+    # -------------------------------------------------
+    # Screening History
+    # -------------------------------------------------
 
-    col1, col2, col3 = st.columns(3)
-
-    col1.metric(
-        "Avg Semantic",
-        round(comparison_df["semantic_score"].mean(), 2)
-    )
-
-    col2.metric(
-        "Avg Skill",
-        round(comparison_df["skill_score"].mean(), 2)
-    )
-
-    col3.metric(
-        "Avg Final",
-        round(comparison_df["final_score"].mean(), 2)
-    )
-
-    st.dataframe(
-        df,
-        use_container_width=True
-    )
-    st.header("Previous Screening History")
+    st.header("🗂 Previous Screening History")
 
     history = load_history()
 
     st.dataframe(
         history,
-        use_container_width=True,
+        width="stretch"
     )
+
+    st.divider()
+
     # -------------------------------------------------
     # Downloads
     # -------------------------------------------------
 
-    st.header("Download Results")
+    st.header("📥 Download Reports")
 
     csv = df.to_csv(index=False)
 
     st.download_button(
-        "📥 Download CSV",
+        "📄 Download CSV",
         csv,
         "ranked_candidates.csv",
-        "text/csv",
+        "text/csv"
     )
 
     json_data = json.dumps(
         results,
-        indent=4,
+        indent=4
     )
 
     st.download_button(
-        "📥 Download JSON",
+        "📄 Download JSON",
         json_data,
         "ranked_candidates.json",
-        "application/json",
+        "application/json"
     )
+
     with open(pdf_path, "rb") as pdf:
+
         st.download_button(
-        label="📄 Download PDF Report",
-        data=pdf,
-        file_name="Recruiter_Report.pdf",
-        mime="application/pdf"
-    )
+            "📄 Download PDF Report",
+            pdf,
+            "Recruiter_Report.pdf",
+            "application/pdf"
+        )
 
     st.success("✅ Analysis Completed Successfully")
-
-    st.markdown("---")
-
-    st.caption(
-        "AI Resume Screening Agent | Built using Python • Streamlit • NLP • Sentence Transformers • FastAPI"
-    )
-    # -------------------------------
-    # Project Summary
-    # -------------------------------
 
     st.divider()
 
     st.header("📌 Project Summary")
 
     st.info("""
-    This AI Resume Screening Agent performs:
+    ✅ Resume Parsing
 
-    ✅ Resume Parsing (PDF & DOCX)
+    ✅ Resume Information Extraction
 
-    ✅ Information Extraction
+    ✅ Job Description Parsing
 
-    ✅ Job Description Skill Extraction
+    ✅ Semantic Similarity
 
-    ✅ Semantic Similarity using Sentence Transformers
+    ✅ Hybrid Candidate Ranking
 
-    ✅ Hybrid Candidate Scoring
+    ✅ ATS Score
 
-    ✅ Resume Ranking
+    ✅ Candidate Comparison
 
-    ✅ Recruiter Analysis
+    ✅ Recruiter Decision Panel
 
-    ✅ Interactive Dashboard
+    ✅ Dashboard Analytics
 
-    ✅ CSV & JSON Export
+    ✅ SQLite History
 
-    ✅ FastAPI Backend Support
+    ✅ CSV Export
+
+    ✅ JSON Export
+
+    ✅ PDF Report
+
+    ✅ Interactive Charts
     """)
 
-    st.caption("Developed using Python • Streamlit • FastAPI • Sentence Transformers • Plotly")
+    st.caption(
+        "AI Resume Screening Agent | Python • Streamlit • NLP • Sentence Transformers • FastAPI"
+    )

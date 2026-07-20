@@ -2,6 +2,7 @@ from extraction.extractor import extract_resume_data
 from similarity.scorer import semantic_similarity
 from similarity.hybrid_score import skill_score, final_score
 from similarity.jd_parser import parse_job_description
+from utils.logger import logger
 
 
 def rank_candidates(job_description, resumes):
@@ -64,9 +65,6 @@ def rank_candidates(job_description, resumes):
         key=lambda x:x["final_score"],
         reverse=True
     )
-
-    from utils.logger import logger
-
     logger.info("Ranking Complete")
 
     return results

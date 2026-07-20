@@ -239,10 +239,20 @@ The project generates
 Add screenshots here:
 
 - Streamlit Dashboard
+![Dashboard](screenshots\dashboard.png)
+-Resume Uploads
+![Dashboard](screenshots\resume_upload.png)
+- ATS Score
+![Dashboard](screenshots/ats_score.png)
 - Candidate Ranking
-- Plotly Charts
-- FastAPI Swagger UI
-
+![Dashboard](screenshots/ranking1.png)
+![Dashboard](screenshots/ranking2.png)
+- Download Reports
+![Dashboard](screenshots/download_report.png)
+-CSV Report
+![Dashboard](screenshots/csv_report.png)
+-PDF Report
+![Dashboard](screenshots/pdf-report.png)
 ---
 
 # 🚀 Future Enhancements

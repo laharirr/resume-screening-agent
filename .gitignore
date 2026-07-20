@@ -1,28 +1,9 @@
-# Virtual environment
 .venv/
 venv/
-
-# Python cache
 __pycache__/
-*.py[cod]
-
-# Streamlit cache
-.streamlit/
-
-# VS Code
-.vscode/
-
-# Generated exports
+*.pyc
 exports/
 data/uploads/
-data/output/
-
-# Database
-*.db
-
-# Logs
-*.log
-
-# OS files
-.DS_Store
-Thumbs.db
+data/ranked_candidates.csv
+data/ranked_candidates.json
+.env

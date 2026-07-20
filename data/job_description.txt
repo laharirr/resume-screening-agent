@@ -1,0 +1,28 @@
+Python AI/ML Developer
+
+Responsibilities
+- Develop backend applications using Python
+- Build REST APIs using FastAPI
+- Work with Machine Learning models
+- Deploy applications using Docker
+- Use Git and GitHub for version control
+- Work with SQL and PostgreSQL databases
+- Develop AI applications using LLMs
+
+Required Skills
+- Python
+- FastAPI
+- SQL
+- Docker
+- Git
+- GitHub
+- Machine Learning
+- LangChain
+- PostgreSQL
+
+Education
+- B.E/B.Tech in Computer Science or Data Science
+
+Experience
+- 0-2 years
+
